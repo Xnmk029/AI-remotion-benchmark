@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Cover Prototype V2 - Cinematic Poster Style</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&family=Oswald:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #050505;
+      --us-color: #2563eb; /* Strong Blue */
+      --ch-color: #dc2626; /* Strong Red */
+      --text-main: #ffffff;
+      --font-display: 'Anton', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+      --font-title: 'Oswald', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    /* 16:9 Canvas */
+    .canvas {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background-color: var(--bg-color);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+
+    /* Film Grain Overlay */
+    .grain {
+      position: absolute;
+      inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.08"/></svg>');
+      pointer-events: none;
+      z-index: 100;
+      mix-blend-mode: overlay;
+    }
+
+    /* Diagonal Split / Lighting */
+    .lighting-blue {
+      position: absolute;
+      top: -20%; left: -10%;
+      width: 60%; height: 140%;
+      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .lighting-red {
+      position: absolute;
+      bottom: -20%; right: -10%;
+      width: 60%; height: 140%;
+      background: radial-gradient(circle at center, rgba(220, 38, 38, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* MASSIVE BACKGROUND TYPOGRAPHY (Bleeding off edges) */
+    .bg-text {
+      position: absolute;
+      font-family: var(--font-display);
+      font-size: 55vw; /* Scales with container */
+      line-height: 0.75;
+      color: rgba(255, 255, 255, 0.03);
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    @media (min-width: 1280px) {
+        .bg-text { font-size: 700px; }
+    }
+
+    .bg-us {
+      top: -5%;
+      left: -2%;
+      color: rgba(37, 99, 235, 0.05);
+    }
+
+    .bg-ch {
+      bottom: -5%;
+      right: -2%;
+      color: rgba(220, 38, 38, 0.05);
+      text-align: right;
+    }
+
+    /* FOREGROUND CONTENT */
+    .content {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+    }
+
+    /* THE 'VS' ELEMENT - Central focal point */
+    .vs-container {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
+    .vs-text {
+      font-family: var(--font-display);
+      font-size: clamp(100px, 15vw, 220px);
+      color: #fff;
+      font-style: italic;
+      line-height: 1;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    /* Slash through the VS */
+    .vs-slash {
+      position: absolute;
+      width: 150%;
+      height: 6px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      transform: rotate(-45deg);
+      box-shadow: 0 0 15px rgba(255,255,255,0.5);
+    }
+
+    /* CONTENDERS (The Models) - Large, impactful, not buttons/tags */
+    .contender {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-title);
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .contender-us {
+      left: 8%;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .contender-ch {
+      right: 8%;
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .model-name {
+      font-size: clamp(40px, 6vw, 80px);
+      font-weight: 700;
+      line-height: 1;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      /* Subtle gradient text */
+      background: linear-gradient(to bottom, #fff 20%, #888);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .model-name.highlight {
+      font-size: clamp(50px, 7vw, 95px);
+      background: #fff;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    /* MAIN TITLE - Pushed to top or bottom, high contrast */
+    .main-title-container {
+      position: absolute;
+      bottom: 8%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 20;
+    }
+
+    .main-title {
+      font-family: var(--font-sans);
+      font-weight: 900;
+      font-size: clamp(30px, 4vw, 55px);
+      letter-spacing: 0.1em;
+      color: #fff;
+      text-transform: uppercase;
+      text-shadow: 0 4px 20px rgba(0,0,0,1);
+    }
+    
+    .subtitle {
+        font-size: clamp(14px, 1.5vw, 22px);
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        color: #ffe600; /* Safety yellow accent */
+        margin-bottom: 10px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    /* ANIMATIONS (Triggered via JS classes) */
+    /* Init states */
+    .bg-us { transform: translateX(-100px) scale(0.95); opacity: 0; transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .bg-ch { transform: translateX(100px) scale(0.95); opacity: 0; transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s; }
+    
+    .contender-us { transform: translate(-50px, -50%); opacity: 0; transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s; }
+    .contender-ch { transform: translate(50px, -50%); opacity: 0; transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s; }
+    
+    .vs-container { transform: translate(-50%, -50%) scale(0.5); opacity: 0; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s; }
+    .vs-slash { transform: rotate(-45deg) scaleX(0); transition: all 0.4s ease-out 1s; }
+    
+    .main-title-container { transform: translateY(30px); opacity: 0; transition: all 0.8s ease-out 0.9s; }
+
+    /* Active states */
+    .animate-in .bg-us { transform: translateX(0) scale(1); opacity: 1; }
+    .animate-in .bg-ch { transform: translateX(0) scale(1); opacity: 1; }
+    .animate-in .contender-us { transform: translate(0, -50%); opacity: 1; }
+    .animate-in .contender-ch { transform: translate(0, -50%); opacity: 1; }
+    .animate-in .vs-container { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    .animate-in .vs-slash { transform: rotate(-45deg) scaleX(1); }
+    .animate-in .main-title-container { transform: translateY(0); opacity: 1; }
+
+    /* Control Panel */
+    .controls {
+        margin-top: 20px;
+        color: #888;
+        font-size: 14px;
+        text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="canvas" id="stage" onclick="playAnim()">
+    
+    <!-- Lighting Effects -->
+    <div class="lighting-blue"></div>
+    <div class="lighting-red"></div>
+    <div class="grain"></div>
+
+    <!-- Background Typography -->
+    <div class="bg-text bg-us">USA</div>
+    <div class="bg-text bg-ch">CHN</div>
+
+    <!-- Foreground Content -->
+    <div class="content">
+        
+        <!-- Left Contender -->
+        <div class="contender contender-us">
+            <div class="model-name highlight">GPT-4o</div>
+            <div class="model-name">Claude 3.5</div>
+        </div>
+
+        <!-- VS Graphic -->
+        <div class="vs-container">
+            <div class="vs-text">VS</div>
+            <div class="vs-slash"></div>
+        </div>
+
+        <!-- Right Contender -->
+        <div class="contender contender-ch">
+            <div class="model-name highlight">DeepSeek V3</div>
+            <div class="model-name">Qwen 2.5</div>
+        </div>
+
+        <!-- Title -->
+        <div class="main-title-container">
+            <div class="subtitle">2026 AI BENCHMARK REPORT</div>
+            <div class="main-title">中美大模型巅峰对决</div>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+      (Click the poster to replay the animation sequence)
+  </div>
+
+  <script>
+      const stage = document.getElementById('stage');
+      
+      function playAnim() {
+          // Reset
+          stage.classList.remove('animate-in');
+          
+          // Force reflow
+          void stage.offsetWidth;
+          
+          // Play
+          stage.classList.add('animate-in');
+      }
+
+      // Initial play on load
+      setTimeout(playAnim, 300);
+  </script>
+
+</body>
+</html>

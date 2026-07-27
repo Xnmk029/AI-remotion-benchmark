@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Remotion output and bundles
+build/
+out/
+
+# Local media assets (too large for regular GitHub storage)
+*.mp4
+*.mp3
+*.mov
+*.mkv
+*.wav
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.log
+

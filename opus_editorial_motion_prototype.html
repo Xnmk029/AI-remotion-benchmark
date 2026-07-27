@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>US VS CH — Editorial Motion Study</title>
+  <style>
+    :root {
+      --paper: #e9e7e0;
+      --paper-deep: #dddad1;
+      --ink: #101010;
+      --red: #f0300a;
+      --blue: #1b4bc4;
+      --hairline: rgba(16, 16, 16, 0.34);
+      --ghost: rgba(16, 16, 16, 0.055);
+      --ease: cubic-bezier(.16, 1, .3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      background: #d8d4c9;
+      color: var(--ink);
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+    }
+
+    .shell {
+      width: min(1600px, 100%);
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      container-type: inline-size;
+      background: var(--paper);
+      box-shadow: 0 24px 64px rgba(25, 21, 15, .2);
+      isolation: isolate;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+      opacity: .15;
+      mix-blend-mode: multiply;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      transform-origin: 49.2% 55.5%;
+    }
+
+    .stage.run .scene {
+      animation: cameraPush 6.4s cubic-bezier(.55, 0, .18, 1) forwards;
+    }
+
+    .paper-mark {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .paper-mark svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      fill: none;
+      color: var(--paper-deep);
+      opacity: 0;
+      transform-origin: 52% 49%;
+    }
+
+    .stage.run .paper-mark svg {
+      animation: markSequence 6.4s cubic-bezier(.55, 0, .18, 1) forwards;
+    }
+
+    .editorial {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .rail {
+      position: absolute;
+      inset: 0 auto 0 0;
+      z-index: 32;
+      width: 11.45%;
+      overflow: hidden;
+      background: var(--red);
+      transform: translateX(-102%);
+    }
+
+    .stage.run .rail {
+      animation: railIn .42s var(--ease) 5.45s forwards;
+    }
+
+    .rail-number {
+      position: absolute;
+      top: 7.7%;
+      left: 24%;
+      margin: 0;
+      color: var(--paper);
+      font: 900 3.2cqw/.8 "Arial Narrow", Arial, sans-serif;
+      letter-spacing: -.08em;
+    }
+
+    .rail-copy {
+      position: absolute;
+      left: 24%;
+      color: var(--paper);
+      font: 700 1cqw/1.25 Consolas, monospace;
+      letter-spacing: -.05em;
+    }
+
+    .rail-copy.mid { top: 49.5%; }
+    .rail-copy.foot { bottom: 7.1%; }
+
+    .rail-lines,
+    .rail-grid,
+    .rail-bars,
+    .rail-pins {
+      position: absolute;
+      left: 24%;
+    }
+
+    .rail-lines {
+      top: 16%;
+      width: 31%;
+      display: grid;
+      gap: .7cqw;
+    }
+
+    .rail-lines i,
+    .rail-bars i {
+      display: block;
+      height: .12cqw;
+      background: var(--paper);
+    }
+
+    .rail-lines i:nth-child(2) { width: 75%; }
+    .rail-lines i:nth-child(3) { width: 47%; }
+
+    .rail-grid {
+      top: 22.3%;
+      width: 29%;
+      aspect-ratio: 1 / 1.55;
+      opacity: .85;
+      background-image: radial-gradient(circle, var(--paper) 0 12%, transparent 15%);
+      background-size: 18% 13%;
+    }
+
+    .rail-bars {
+      top: 37.5%;
+      width: 34%;
+      display: grid;
+      gap: .58cqw;
+    }
+
+    .rail-bars i:nth-child(1) { height: .6cqw; width: 45%; background: var(--ink); }
+    .rail-bars i:nth-child(2) { width: 100%; }
+    .rail-bars i:nth-child(3) { width: 72%; }
+    .rail-bars i:nth-child(4) { width: 46%; }
+
+    .rail-pins {
+      bottom: 20%;
+      display: flex;
+      gap: .65cqw;
+    }
+
+    .rail-pins i {
+      width: .47cqw;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--paper);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(1.3cqw);
+    }
+
+    .stage.run .reveal-a { animation: revealUp .3s var(--ease) .72s forwards; }
+    .stage.run .reveal-b { animation: revealUp .34s var(--ease) .88s forwards; }
+    .stage.run .reveal-c { animation: revealUp .36s var(--ease) 1.04s forwards; }
+
+    .top-bars {
+      position: absolute;
+      top: 13.7%;
+      left: 19.2%;
+      width: 28.3%;
+      display: grid;
+      grid-template-columns: 55% 29% 1fr;
+      gap: .38cqw;
+      align-items: end;
+    }
+
+    .top-bars i {
+      display: block;
+      background: var(--ink);
+      height: 2.05cqw;
+    }
+
+    .top-bars i:nth-child(1) { grid-column: 1 / 3; width: 80%; }
+    .top-bars i:nth-child(2) { height: 1.65cqw; }
+    .top-bars i:nth-child(3) { height: 1.65cqw; }
+    .top-bars i:nth-child(4) {
+      grid-column: 1 / 3;
+      width: 77%;
+      height: .13cqw;
+      margin-top: .7cqw;
+      background: repeating-linear-gradient(90deg, var(--ink) 0 13%, transparent 13% 16%);
+    }
+
+    .vertical-index {
+      position: absolute;
+      top: 14.6%;
+      left: 44.1%;
+      width: .85cqw;
+      display: grid;
+      gap: .43cqw;
+    }
+
+    .vertical-index i {
+      height: .13cqw;
+      background: var(--ink);
+    }
+
+    .vertical-index i:first-child { height: .8cqw; }
+    .vertical-index i:last-child { height: .8cqw; background: var(--red); }
+
+    .blue-rule {
+      position: absolute;
+      top: 22.9%;
+      right: -3%;
+      width: 36.3%;
+      height: 1.22cqw;
+      background: var(--blue);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .stage.run .blue-rule {
+      animation: ruleIn .34s var(--ease) .8s forwards;
+    }
+
+    .focus-frame {
+      position: absolute;
+      top: 30.8%;
+      left: 19.1%;
+      width: 60.2%;
+      height: 49.5%;
+      border: 1px solid var(--hairline);
+    }
+
+    .focus-frame::before,
+    .focus-frame::after {
+      content: "";
+      position: absolute;
+      left: -6px;
+      width: 11px;
+      height: 11px;
+      border-left: 1px solid var(--ink);
+      border-top: 1px solid var(--ink);
+    }
+
+    .focus-frame::before { top: -6px; }
+    .focus-frame::after { bottom: -6px; transform: rotate(-90deg); }
+
+    .frame-dots {
+      position: absolute;
+      inset: 5% auto 5% .7%;
+      width: 1px;
+      opacity: .45;
+      background: repeating-linear-gradient(to bottom, var(--ink) 0 2px, transparent 2px 9px);
+    }
+
+    .right-glyph {
+      position: absolute;
+      top: 39.8%;
+      right: 6.4%;
+      width: 2.25%;
+      display: grid;
+      gap: .48cqw;
+    }
+
+    .right-glyph i {
+      height: .16cqw;
+      background: var(--blue);
+    }
+
+    .right-glyph i:nth-child(1) { width: 32%; }
+    .right-glyph i:nth-child(2) { width: 55%; }
+    .right-glyph i:nth-child(3) { width: 38%; }
+    .right-glyph i:nth-child(4) { width: 83%; }
+    .right-glyph i:nth-child(5) {
+      width: .62cqw;
+      height: .62cqw;
+      margin-top: 1.3cqw;
+      border-radius: 50%;
+    }
+
+    .bottom-rule {
+      position: absolute;
+      left: 19.2%;
+      right: 4.7%;
+      bottom: 14.9%;
+      height: 1px;
+      background: var(--ink);
+    }
+
+    .scoreboard {
+      position: absolute;
+      left: 19.2%;
+      right: 4.7%;
+      bottom: 5.1%;
+      height: 8%;
+      display: grid;
+      grid-template-columns: 1.25fr repeat(7, 1fr);
+      gap: 0;
+    }
+
+    .score-legend,
+    .model {
+      min-width: 0;
+      padding: 0 1.1cqw;
+      border-left: 1px solid var(--hairline);
+      will-change: transform, opacity;
+    }
+
+    .score-legend {
+      padding-left: 0;
+      border-left: 0;
+      font: 700 .9cqw/1.45 Consolas, monospace;
+    }
+
+    .score-legend b {
+      font-size: 1.16cqw;
+      letter-spacing: -.05em;
+    }
+
+    .model-name {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 900 .78cqw/1.1 "Arial Narrow", Arial, sans-serif;
+      letter-spacing: -.025em;
+    }
+
+    .dots {
+      display: flex;
+      gap: .44cqw;
+      margin-top: 1.05cqw;
+    }
+
+    .dots i {
+      width: .62cqw;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(16, 16, 16, .32);
+    }
+
+    .dots .us { border: 0; background: var(--red); }
+    .dots .ch { border: 0; background: var(--blue); }
+
+    .task-entry {
+      position: absolute;
+      z-index: 8;
+      left: 22.4%;
+      top: 68.5%;
+      display: flex;
+      align-items: center;
+      gap: 1cqw;
+      opacity: 0;
+      transform: translateY(1cqw);
+      font: 700 .86cqw/1 Consolas, monospace;
+      letter-spacing: .15em;
+    }
+
+    .task-entry::before {
+      content: "";
+      width: .65cqw;
+      aspect-ratio: 1;
+      background: var(--red);
+    }
+
+    .stage.run .task-entry { animation: taskIn .32s var(--ease) 5.62s forwards; }
+
+    .camp-label {
+      position: absolute;
+      z-index: 7;
+      top: 34.6%;
+      display: flex;
+      align-items: center;
+      gap: .65cqw;
+      opacity: 0;
+      font: 700 .76cqw/1 Consolas, monospace;
+      letter-spacing: .1em;
+    }
+
+    .camp-label::before {
+      content: "";
+      width: 1.9cqw;
+      height: .18cqw;
+      background: currentColor;
+    }
+
+    .camp-label.west { left: 22.4%; color: var(--red); }
+    .camp-label.east { left: 54.2%; color: var(--blue); }
+
+    .stage.run .camp-label { animation: labelIn .26s var(--ease) 2.58s forwards; }
+
+    .stage.run .model-gpt { animation: toWestOne .56s var(--ease) 2.1s forwards; }
+    .stage.run .model-claude { animation: toWestTwo .56s var(--ease) 2.18s forwards; }
+    .stage.run .model-fable { animation: toEastOne .56s var(--ease) 2.1s forwards; }
+    .stage.run .model-deepseek { animation: toEastTwo .56s var(--ease) 2.18s forwards; }
+    .stage.run .model-kimi { animation: toEastThree .56s var(--ease) 2.26s forwards; }
+    .stage.run .model-qwen { animation: toEastFour .56s var(--ease) 2.34s forwards; }
+    .stage.run .model-kieran { animation: kieranOut .24s ease 2.04s forwards; }
+    .stage.run .score-legend { animation: legendLift .48s var(--ease) 2.08s forwards; }
+    .stage.run .bottom-rule { animation: bottomRuleOut .3s ease 2.16s forwards; }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 12px;
+      font: 12px Consolas, monospace;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: 1px solid #99958b;
+      background: #f6f3eb;
+      color: #171717;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover { background: #fff; }
+    .controls span { opacity: .6; }
+
+    .stage.cover .paper-mark svg { opacity: 1; transform: scale(1); }
+    .stage.cover .rail { transform: translateX(-102%); }
+    .stage.cover .reveal { opacity: 1; transform: none; }
+    .stage.cover .blue-rule { transform: scaleX(1); }
+
+    .stage.group .scene { transform: scale(1); }
+    .stage.group .paper-mark svg { opacity: 1; transform: scale(1); }
+    .stage.group .rail { transform: translateX(-102%); }
+    .stage.group .reveal { opacity: 1; transform: none; }
+    .stage.group .blue-rule { transform: scaleX(1); }
+    .stage.group .camp-label { opacity: 1; transform: none; }
+    .stage.group .score-legend { opacity: 0; transform: translateY(-8cqw); }
+    .stage.group .bottom-rule { opacity: 0; }
+    .stage.group .model-gpt { transform: translate(-8.3cqw, -28cqw); }
+    .stage.group .model-claude { transform: translate(-17.5cqw, -23.5cqw); }
+    .stage.group .model-fable { transform: translate(5cqw, -28cqw); }
+    .stage.group .model-deepseek { transform: translate(-4.2cqw, -23.5cqw); }
+    .stage.group .model-kimi { transform: translate(-13.5cqw, -19cqw); }
+    .stage.group .model-qwen { transform: translate(-22.7cqw, -14.5cqw); }
+    .stage.group .model-kieran { opacity: 0; transform: translateY(-2cqw); }
+
+    .stage.zoom .scene { transform: scale(1.52); }
+    .stage.zoom .paper-mark svg { opacity: 0; transform: scale(1); }
+    .stage.zoom .rail { transform: none; }
+    .stage.zoom .reveal { opacity: 1; transform: none; }
+    .stage.zoom .blue-rule { transform: scaleX(1); }
+    .stage.zoom .task-entry,
+    .stage.zoom .camp-label { opacity: 1; transform: none; }
+    .stage.zoom .score-legend { opacity: 0; transform: translateY(-8cqw); }
+    .stage.zoom .bottom-rule { opacity: 0; }
+    .stage.zoom .model-gpt { transform: translate(-8.3cqw, -28cqw); }
+    .stage.zoom .model-claude { transform: translate(-17.5cqw, -23.5cqw); }
+    .stage.zoom .model-fable { transform: translate(5cqw, -28cqw); }
+    .stage.zoom .model-deepseek { transform: translate(-4.2cqw, -23.5cqw); }
+    .stage.zoom .model-kimi { transform: translate(-13.5cqw, -19cqw); }
+    .stage.zoom .model-qwen { transform: translate(-22.7cqw, -14.5cqw); }
+    .stage.zoom .model-kieran { opacity: 0; transform: translateY(-2cqw); }
+
+    @keyframes markSequence {
+      0%   { opacity: 0; transform: scale(1.055); }
+      4%   { opacity: 1; }
+      6%   { opacity: .08; }
+      8%   { opacity: 1; }
+      10%  { opacity: .18; }
+      14%  { opacity: 1; }
+      18%  { opacity: 1; transform: scale(1.055); }
+      27%  { opacity: 1; transform: scale(1); }
+      52%  { opacity: 1; transform: scale(1); }
+      76%,
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    @keyframes cameraPush {
+      0%, 53% { transform: scale(1); }
+      84%, 100% { transform: scale(1.52); }
+    }
+
+    @keyframes railIn { to { transform: translateX(0); } }
+    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes ruleIn { to { transform: scaleX(1); } }
+    @keyframes taskIn { to { opacity: 1; transform: translateY(0); } }
+    @keyframes labelIn { to { opacity: 1; } }
+    @keyframes legendLift { to { opacity: 0; transform: translateY(-8cqw); } }
+    @keyframes bottomRuleOut { to { opacity: 0; } }
+    @keyframes toWestOne { to { transform: translate(-8.3cqw, -28cqw); } }
+    @keyframes toWestTwo { to { transform: translate(-17.5cqw, -23.5cqw); } }
+    @keyframes toEastOne { to { transform: translate(5cqw, -28cqw); } }
+    @keyframes toEastTwo { to { transform: translate(-4.2cqw, -23.5cqw); } }
+    @keyframes toEastThree { to { transform: translate(-13.5cqw, -19cqw); } }
+    @keyframes toEastFour { to { transform: translate(-22.7cqw, -14.5cqw); } }
+    @keyframes kieranOut { to { opacity: 0; transform: translateY(-2cqw); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-delay: 0ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <main class="stage run" id="stage">
+      <aside class="rail">
+        <p class="rail-number">01</p>
+        <div class="rail-lines"><i></i><i></i><i></i></div>
+        <div class="rail-grid"></div>
+        <div class="rail-bars"><i></i><i></i><i></i><i></i></div>
+        <p class="rail-copy mid">MODEL<br>INDEX</p>
+        <div class="rail-pins"><i></i><i></i><i></i><i></i></div>
+        <p class="rail-copy foot">2026<br>VOL.01</p>
+      </aside>
+
+      <div class="scene">
+        <div class="paper-mark" aria-hidden="true">
+          <!-- Background wordmark is geometry only. No font is used. -->
+          <svg viewBox="0 0 1684 941" preserveAspectRatio="none">
+            <defs>
+              <path id="gU" d="M29 0 V810 C29 945 55 1011 87.5 1011 C120 1011 146 945 146 810 V0"/>
+              <path id="gS" d="M146 270 C146 128 120 29 87.5 29 C55 29 29 128 29 263
+                               C29 378 45 447 87.5 520 C130 593 146 662 146 777
+                               C146 912 120 1011 87.5 1011 C55 1011 29 912 29 770"/>
+              <path id="gV" d="M29 0 L87.5 1011 L146 0"/>
+              <path id="gC" d="M146 245 C146 113 120 29 87.5 29 C55 29 29 113 29 245 V795
+                               C29 927 55 1011 87.5 1011 C120 1011 146 927 146 795"/>
+              <path id="gH" d="M29 0 V1040 M146 0 V1040 M29 520 H146"/>
+            </defs>
+            <g fill="none" stroke="currentColor" stroke-width="58" stroke-linejoin="round">
+              <use href="#gU" x="200"  y="-70"/>
+              <use href="#gS" x="387"  y="-70"/>
+              <use href="#gV" x="730"  y="-70"/>
+              <use href="#gS" x="917"  y="-70"/>
+              <use href="#gC" x="1260" y="-70"/>
+              <use href="#gH" x="1447" y="-70"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="editorial">
+          <div class="top-bars reveal reveal-a">
+            <i></i><i></i><i></i><i></i>
+          </div>
+
+          <div class="vertical-index reveal reveal-a">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+
+          <div class="blue-rule"></div>
+
+          <section class="focus-frame reveal reveal-b">
+            <div class="frame-dots"></div>
+          </section>
+
+          <div class="camp-label west">WEST / 02</div>
+          <div class="camp-label east">EAST / 04</div>
+
+          <div class="right-glyph reveal reveal-b">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+
+          <div class="bottom-rule reveal reveal-c"></div>
+
+          <footer class="scoreboard reveal reveal-c">
+            <div class="score-legend">
+              <b>BENCHMARK / 07</b><br>
+              VISUAL · CODE · AGENT · SPEED
+            </div>
+            <div class="model model-gpt">
+              <span class="model-name">GPT 5.6 SOL</span>
+              <div class="dots"><i class="us"></i><i class="us"></i><i class="us"></i><i></i></div>
+            </div>
+            <div class="model model-claude">
+              <span class="model-name">CLAUDE OPUS 5</span>
+              <div class="dots"><i class="us"></i><i class="us"></i><i class="us"></i><i></i></div>
+            </div>
+            <div class="model model-fable">
+              <span class="model-name">FABLE 5</span>
+              <div class="dots"><i class="ch"></i><i class="ch"></i><i class="ch"></i><i></i></div>
+            </div>
+            <div class="model model-deepseek">
+              <span class="model-name">DEEPSEEK V4 GA</span>
+              <div class="dots"><i class="ch"></i><i class="ch"></i><i></i><i></i></div>
+            </div>
+            <div class="model model-kimi">
+              <span class="model-name">KIMI K3</span>
+              <div class="dots"><i class="ch"></i><i class="ch"></i><i></i><i></i></div>
+            </div>
+            <div class="model model-qwen">
+              <span class="model-name">QWEN 3.8 MAX</span>
+              <div class="dots"><i class="ch"></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="model model-kieran">
+              <span class="model-name">KIERAN / ANON.</span>
+              <div class="dots"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </footer>
+
+          <div class="task-entry">VISUAL TEST / 01</div>
+        </div>
+      </div>
+    </main>
+
+    <div class="controls">
+      <button type="button" data-mode="run">重新播放</button>
+      <button type="button" data-mode="cover">停在封面关键帧</button>
+      <button type="button" data-mode="group">停在两列分组帧</button>
+      <button type="button" data-mode="zoom">停在中心推进帧</button>
+      <span>空格：重播　C：封面　G：分组　Z：中心推进</span>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.querySelector("#stage");
+
+    const setMode = (mode) => {
+      stage.className = "stage";
+      void stage.offsetWidth;
+      stage.classList.add(mode);
+    };
+
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.mode));
+    });
+
+    addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        setMode("run");
+      }
+      if (event.key.toLowerCase() === "c") setMode("cover");
+      if (event.key.toLowerCase() === "g") setMode("group");
+      if (event.key.toLowerCase() === "z") setMode("zoom");
+    });
+  </script>
+</body>
+</html>

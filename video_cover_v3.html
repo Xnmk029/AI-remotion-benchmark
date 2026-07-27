@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Cover Prototype V3 - Google M3E Motion System</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #0a0a0c;
+      --accent-yellow: #ffe600;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.5);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-watermark: 'Anton', sans-serif;
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Google Material 3 Expressive (M3E) Motion Curves */
+      --m3e-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);          /* Signature M3 Emphasized Easing */
+      --m3e-expressive-pop: cubic-bezier(0.34, 1.75, 0.5, 1.0);   /* M3E Playful Elastic Bounce */
+      --m3e-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);        /* Snappy entrance decelerate */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: var(--font-sans);
+    }
+
+    /* 16:9 Canvas */
+    .canvas {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      background-color: var(--bg-color);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+
+    /* Swiss Grid Background */
+    .grid-layer {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 5% 8.88%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.8s var(--m3e-emphasized);
+    }
+    .anim-in .grid-layer { opacity: 1; }
+
+    /* Giant Narrow Typography Watermark - US VS CH (Fully Visible with VS centered) */
+    .watermark-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .watermark-text {
+      font-family: var(--font-watermark);
+      font-size: clamp(160px, 22.5vw, 360px);
+      color: rgba(255, 255, 255, 0.18);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      line-height: 0.8;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: transform 1.2s var(--m3e-expressive-pop), opacity 0.6s var(--m3e-emphasized);
+    }
+
+    .anim-in .watermark-text {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Crosshairs & Frame */
+    .frame-border {
+      position: absolute;
+      inset: 4%;
+      border: 1px solid rgba(255, 255, 255, 0);
+      z-index: 10;
+      pointer-events: none;
+      transition: border-color 0.8s var(--m3e-emphasized) 0.1s;
+    }
+    .anim-in .frame-border {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .crosshair {
+      position: absolute;
+      width: 20px; height: 20px;
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 0.5s var(--m3e-emphasized), transform 0.6s var(--m3e-expressive-pop);
+    }
+    .anim-in .crosshair { opacity: 1; transform: scale(1); }
+
+    .crosshair::before { content:''; position:absolute; top:9px; left:0; width:20px; height:2px; background:var(--accent-yellow); }
+    .crosshair::after { content:''; position:absolute; left:9px; top:0; width:2px; height:20px; background:var(--accent-yellow); }
+
+    .ch-tl { top: -10px; left: -10px; transition-delay: 0.2s; }
+    .ch-tr { top: -10px; right: -10px; transition-delay: 0.3s; }
+    .ch-bl { bottom: -10px; left: -10px; transition-delay: 0.4s; }
+    .ch-br { bottom: -10px; right: -10px; transition-delay: 0.5s; }
+
+    /* Meta Data Corners */
+    .meta-text {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--text-sub);
+      z-index: 15;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: opacity 0.6s var(--m3e-emphasized) 0.3s, transform 0.6s var(--m3e-emphasized) 0.3s;
+    }
+    .meta-tl { top: 6%; left: 5%; }
+    .meta-br { bottom: 6%; right: 5%; color: var(--accent-yellow); }
+
+    .anim-in .meta-text { opacity: 1; transform: translateY(0); }
+
+    /* Foreground Content Layout */
+    .content {
+      position: absolute;
+      inset: 12%;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Main Title - M3E Expressive Container Expand */
+    .title-group {
+      margin-bottom: 50px;
+      opacity: 0;
+      transform: translateY(30px) scale(0.92);
+      transition: opacity 0.8s var(--m3e-emphasized) 0.15s, 
+                  transform 0.8s var(--m3e-expressive-pop) 0.15s;
+    }
+
+    .anim-in .title-group {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .sub-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.4em;
+      color: var(--accent-yellow);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .main-title {
+      font-family: var(--font-sans);
+      font-size: clamp(40px, 6vw, 85px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      background: linear-gradient(to right, #ffffff, #a1a1aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Model Typography Layout */
+    .models-layout {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .camp {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .camp.left { align-items: flex-start; text-align: left; }
+    .camp.right { align-items: flex-end; text-align: right; }
+
+    .camp-label {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.6s var(--m3e-emphasized) var(--delay, 0.25s), 
+                  transform 0.6s var(--m3e-expressive-pop) var(--delay, 0.25s);
+    }
+    .camp.left .camp-label { color: var(--accent-blue); }
+    .camp.right .camp-label { color: var(--accent-red); }
+
+    .anim-in .camp-label { opacity: 1; transform: translateY(0); }
+
+    /* Staggered Model Line - M3E Expressive Snappy Entrance */
+    .model-name {
+      font-family: var(--font-display);
+      font-size: clamp(35px, 5.5vw, 75px);
+      letter-spacing: 0.05em;
+      color: #fff;
+      line-height: 0.9;
+      opacity: 0;
+      transform: translateY(35px) scale(0.88);
+      transition: opacity 0.7s var(--m3e-emphasized) var(--delay, 0.3s),
+                  transform 0.7s var(--m3e-expressive-pop) var(--delay, 0.3s);
+    }
+
+    .model-name.secondary {
+      color: var(--text-sub);
+      font-size: clamp(25px, 4vw, 55px);
+    }
+
+    .anim-in .model-name {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* VS Emblem - M3E Expressive Overshoot Pop */
+    .vs-divider {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 8vw, 120px);
+      color: var(--accent-yellow);
+      font-style: italic;
+      opacity: 0;
+      transform: scale(0.3) rotate(-15deg);
+      transition: opacity 0.8s var(--m3e-emphasized) 0.4s,
+                  transform 0.9s var(--m3e-expressive-pop) 0.4s;
+    }
+
+    .anim-in .vs-divider {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    .controls { margin-top: 20px; color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="canvas" id="stage" onclick="playAnim()">
+    
+    <!-- Background Grid -->
+    <div class="grid-layer"></div>
+
+    <!-- Giant Narrow Typography Watermark (US VS CH centered, subtle background watermark) -->
+    <div class="watermark-container">
+      <div class="watermark-text">US  VS  CH</div>
+    </div>
+
+    <!-- Frame & Crosshairs -->
+    <div class="frame-border">
+      <div class="crosshair ch-tl"></div>
+      <div class="crosshair ch-tr"></div>
+      <div class="crosshair ch-bl"></div>
+      <div class="crosshair ch-br"></div>
+    </div>
+
+    <!-- Meta Data -->
+    <div class="meta-text meta-tl">SYS.ID // 2026.07.27</div>
+    <div class="meta-text meta-br">LLM BENCHMARK VOL.01</div>
+
+    <!-- Foreground Content -->
+    <div class="content">
+      
+      <!-- Main Title -->
+      <div class="title-group">
+        <div class="sub-title">2026 AI MODEL EVALUATION REPORT</div>
+        <div class="main-title">中美顶级大模型横评</div>
+      </div>
+
+      <!-- Models Typography Layout -->
+      <div class="models-layout">
+        
+        <!-- Left: US -->
+        <div class="camp left">
+          <div class="camp-label" style="--delay: 0.25s;">USA CAMP // WEST</div>
+          <div class="model-name" style="--delay: 0.35s;">CLAUDE OPUS 5</div>
+          <div class="model-name" style="--delay: 0.45s;">CLAUDE FABLE</div>
+          <div class="model-name secondary" style="--delay: 0.55s;">GPT 5.6 SOL</div>
+        </div>
+
+        <!-- Center: VS -->
+        <div class="vs-divider">VS</div>
+
+        <!-- Right: CH -->
+        <div class="camp right">
+          <div class="camp-label" style="--delay: 0.30s;">EAST // CHINA CAMP</div>
+          <div class="model-name" style="--delay: 0.40s;">DEEPSEEK V4 GA</div>
+          <div class="model-name" style="--delay: 0.50s;">KIMI K3</div>
+          <div class="model-name secondary" style="--delay: 0.60s;">QWEN 3.8 MAX 0720</div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="controls">
+    (Click the poster to replay the Google M3E Motion animation sequence)
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    function playAnim() {
+      stage.classList.remove('anim-in');
+      void stage.offsetWidth;
+      stage.classList.add('anim-in');
+    }
+    setTimeout(playAnim, 200);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MINIMALIST COLLAGE // PLAN B</title>
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* VARIABLES & THEME (Light Minimalist) */
+    :root {
+      --c-bg: #f7f7f7;
+      --c-grid: #e0e0e0;
+      --c-text: #1a1a1a;
+      --c-accent: #292929;
+      --c-cyan: #00e5ff;
+      --c-magenta: #ff007f;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --grid-size: 50px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--c-bg);
+      color: var(--c-text);
+      font-family: var(--font-display);
+      /* Hairline Grid Background */
+      background-image: 
+        linear-gradient(var(--c-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+      background-size: var(--grid-size) var(--grid-size);
+      background-position: -1px -1px;
+      overflow-x: hidden;
+      padding-bottom: 100px;
+    }
+
+    /* SVG Grain Overlay */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: multiply;
+    }
+
+    /* HEADER */
+    header {
+      padding: 60px 40px;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+    
+    header h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      text-transform: uppercase;
+      max-width: 600px;
+    }
+    
+    .header-meta {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-align: right;
+      color: var(--c-accent);
+    }
+    
+    .crosshair-bg {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 20vw;
+      color: rgba(0,0,0,0.03);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* STAGGERED MASONRY LAYOUT */
+    .masonry-container {
+      column-count: 3;
+      column-gap: 40px;
+      padding: 0 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1200px) { .masonry-container { column-count: 2; } }
+    @media (max-width: 768px) { .masonry-container { column-count: 1; } }
+
+    /* FLOATING CARDS */
+    .card {
+      break-inside: avoid;
+      margin-bottom: 60px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      /* Intentional offset for collage feel */
+      transform: translateX(0);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Stagger items slightly */
+    .card:nth-child(even) {
+        transform: translateY(30px);
+    }
+    
+    .card:hover {
+        transform: translateY(-5px) scale(1.01);
+        z-index: 10;
+    }
+    
+    .card:nth-child(even):hover {
+        transform: translateY(25px) scale(1.01);
+    }
+
+    /* VIDEO / IMAGE CONTAINER */
+    .media-container {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--c-grid);
+      position: relative;
+      overflow: hidden;
+      /* Halftone overlay pattern */
+      background-image: radial-gradient(var(--c-text) 20%, transparent 20%), radial-gradient(var(--c-text) 20%, transparent 20%);
+      background-size: 4px 4px;
+      background-position: 0 0, 2px 2px;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    
+    .card:hover .media-container {
+        opacity: 1;
+        /* Glitch borders on hover */
+        box-shadow: -3px 0 var(--c-cyan), 3px 0 var(--c-magenta);
+    }
+
+    /* TAPE / STICKER EFFECTS */
+    .tape {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 80px;
+      height: 25px;
+      background-color: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+      z-index: 5;
+    }
+    
+    .tape.alt {
+        top: auto;
+        bottom: 20px;
+        left: -15px;
+        transform: rotate(85deg);
+        width: 100px;
+    }
+
+    /* TYPOGRAPHY IN CARDS */
+    .card-content {
+      padding: 20px 0;
+      position: relative;
+    }
+
+    .card-meta-top {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--c-grid);
+      padding-bottom: 5px;
+    }
+
+    .card h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    
+    .card p.subtitle {
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: #555;
+    }
+
+    /* GLITCH TEXT ON HOVER */
+    .glitch-text {
+      position: relative;
+      display: inline-block;
+    }
+
+    .card:hover .glitch-text::before,
+    .card:hover .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--c-bg);
+    }
+
+    .card:hover .glitch-text::before {
+      left: 2px;
+      text-shadow: -1px 0 var(--c-cyan);
+      clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+      animation: glitch-anim 0.3s infinite linear alternate-reverse;
+    }
+
+    .card:hover .glitch-text::after {
+      left: -2px;
+      text-shadow: -1px 0 var(--c-magenta);
+      clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+      animation: glitch-anim2 0.4s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim {
+      0% { clip-path: polygon(0 15%, 100% 15%, 100% 16%, 0 16%); transform: translate(1px, 0); }
+      50% { clip-path: polygon(0 65%, 100% 65%, 100% 68%, 0 68%); transform: translate(-1px, 0); }
+      100% { clip-path: polygon(0 40%, 100% 40%, 100% 42%, 0 42%); transform: translate(1px, 0); }
+    }
+
+    @keyframes glitch-anim2 {
+      0% { clip-path: polygon(0 70%, 100% 70%, 100% 72%, 0 72%); transform: translate(-1px, 0); }
+      50% { clip-path: polygon(0 25%, 100% 25%, 100% 27%, 0 27%); transform: translate(1px, 0); }
+      100% { clip-path: polygon(0 85%, 100% 85%, 100% 88%, 0 88%); transform: translate(-1px, 0); }
+    }
+
+    /* MARKERS */
+    .crosshair {
+        position: absolute;
+        width: 10px; height: 10px;
+    }
+    .crosshair::before, .crosshair::after {
+        content: ''; position: absolute; background: var(--c-accent);
+    }
+    .crosshair::before { top: 50%; left: 0; width: 100%; height: 1px; transform: translateY(-50%); }
+    .crosshair::after { left: 50%; top: 0; height: 100%; width: 1px; transform: translateX(-50%); }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="crosshair-bg">+</div>
+    <div>
+        <p style="font-family: var(--font-mono); font-size: 0.9rem; margin-bottom: 10px;">[ ARCHIVE.01 ]</p>
+        <h1>Creative<br/>Development<br/>Showreel</h1>
+    </div>
+    <div class="header-meta">
+        <p>FPS: 60.0</p>
+        <p>RES: 1920x1080</p>
+        <p>SYS: ONLINE</p>
+    </div>
+    <div class="crosshair" style="bottom: -5px; left: 40px;"></div>
+    <div class="crosshair" style="bottom: -5px; right: 40px;"></div>
+  </header>
+
+  <main class="masonry-container" id="projectGrid">
+    <!-- Cards injected via JS -->
+  </main>
+
+  <script>
+    const PROJECTS_DATA = [
+      { id: 'watch-dogs', title: 'Watch Dogs 2 HUD', subtitle: 'Dynamic Glitch & Ambient Audio UI', category: 'UI & Glitch', rating: 9.8, duration: '33.4s' },
+      { id: 'cfd-fluid', title: 'Navier-Stokes Engine', subtitle: 'Real-Time Grid Velocity Propagation', category: 'Physics', rating: 9.6, duration: '15.5s' },
+      { id: 'balatro', title: 'Balatro Rogue-Lite', subtitle: 'Vortex Shaders & Deck Mechanics', category: 'Game Dev', rating: 9.9, duration: '28.7s' },
+      { id: 'teardown', title: 'Voxel Destruction', subtitle: 'Rigid-Body & Ray-Marching Engine', category: 'Physics', rating: 9.7, duration: '43.6s' },
+      { id: 'rtx-raytracing', title: 'RTX Engine', subtitle: 'BVH Acceleration & Global Illumination', category: 'Graphics', rating: 9.5, duration: '46.1s' },
+      { id: 'fpv-flight', title: 'FPV Flight Sim', subtitle: 'Quadcopter Aerodynamics Terrain', category: 'Physics', rating: 9.4, duration: '56.7s' },
+      { id: 'kinetic-typography', title: 'Kinetic Particle Engine', subtitle: 'Procedural Text Dispersal', category: 'Kinetic', rating: 9.6, duration: '125.0s' },
+      { id: 'magic-tower', title: 'Strategy Dungeon Crawler', subtitle: 'Retro Tile Engine & Deductions', category: 'Game Dev', rating: 9.2, duration: '50.6s' },
+      { id: 'svg-motion', title: 'SVG Bezier Morphing', subtitle: 'Keyframe Path Animation Engine', category: 'Kinetic', rating: 9.3, duration: '36.0s' },
+      { id: 'wishbone-suspension', title: 'Double Wishbone', subtitle: 'Automotive Suspension Simulation', category: 'Physics', rating: 9.5, duration: '31.1s' },
+      { id: 'game-2048', title: '2048 Motion Engine', subtitle: 'Eased Tile Merging Feedback', category: 'Game Dev', rating: 9.0, duration: '18.0s' },
+      { id: 'knowledge-graph', title: 'Interactive World Graph', subtitle: '3D Force-Directed Network', category: 'Data Viz', rating: 9.7, duration: '14.8s' },
+      { id: 'frontend-architecture', title: 'Modular UI Systems', subtitle: 'Decoupled Micro-Interactions', category: 'UI & Glitch', rating: 9.8, duration: '17.6s' }
+    ];
+
+    const grid = document.getElementById('projectGrid');
+
+    PROJECTS_DATA.forEach((proj, index) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      
+      // Random tape placements
+      let tapeHtml = '';
+      if(index % 3 === 0) tapeHtml = '<div class="tape"></div>';
+      if(index % 5 === 0) tapeHtml = '<div class="tape alt"></div>';
+
+      card.innerHTML = `
+        <div class="media-container">
+            ${tapeHtml}
+            <!-- Add a subtle crosshair in the center of the media -->
+            <div class="crosshair" style="top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.3;"></div>
+        </div>
+        <div class="card-content">
+          <div class="card-meta-top">
+            <span>[${proj.category}]</span>
+            <span>${proj.duration}</span>
+          </div>
+          <h2 class="glitch-text" data-text="${proj.title}">${proj.title}</h2>
+          <p class="subtitle">${proj.subtitle}</p>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swiss Editorial Graphic Motion Prototype - AI Model Benchmark</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #0d0e11;
+      --panel-bg: rgba(255, 255, 255, 0.035);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-yellow: #ffe600;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.65);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #060708;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* TOP WORKSPACE NAVBAR */
+    .top-nav {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .top-nav .badge {
+      background: rgba(255, 230, 0, 0.15);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(255, 230, 0, 0.4);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    /* MAIN 16:9 VIEWPORT CONTAINER */
+    .viewport-outer {
+      width: 100%;
+      max-width: 1280px;
+      aspect-ratio: 16 / 9;
+      position: relative;
+      background-color: var(--bg-color);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    /* CANVASES / STAGE */
+    .stage {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* LAYER 0: NOISE TEXTURE OVERLAY */
+    .noise-layer {
+      position: absolute;
+      inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.04"/></svg>');
+      pointer-events: none;
+      z-index: 90;
+    }
+
+    /* LAYER 1: SWISS GRID LINES */
+    .grid-layer {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 8% 14.28%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* DIAGONAL ACCENT LINES (AS IN USER REFERENCE GRAPHIC) */
+    .diagonal-line-1 {
+      position: absolute;
+      top: 10%;
+      right: 15%;
+      width: 140px;
+      height: 1px;
+      background: rgba(239, 68, 68, 0.6);
+      transform: rotate(-35deg);
+      transform-origin: left center;
+      z-index: 2;
+      transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .diagonal-line-2 {
+      position: absolute;
+      bottom: 12%;
+      left: 22%;
+      width: 220px;
+      height: 1px;
+      background: rgba(59, 130, 246, 0.6);
+      transform: rotate(-25deg);
+      transform-origin: left center;
+      z-index: 2;
+    }
+
+    /* LAYER 2: GIANT WATERMARK TEXT (US VS CH) */
+    .watermark-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .watermark-text {
+      font-family: var(--font-display);
+      font-size: min(24vw, 310px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.07);
+      white-space: nowrap;
+      text-transform: uppercase;
+      line-height: 1;
+      transform: scale(1);
+      transition: transform 12s ease-out, opacity 1s ease;
+    }
+
+    .watermark-text.anim-active {
+      transform: scale(1.06);
+    }
+
+    /* LAYER 3: FRAMEWORK CORNERS & META */
+    .frame-border {
+      position: absolute;
+      inset: 3.5%;
+      border: 1px solid var(--panel-border);
+      pointer-events: none;
+      z-index: 10;
+      transition: border-color 0.5s;
+    }
+
+    .corner-bracket {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+    }
+
+    .corner-tl { top: -1px; left: -1px; border-top: 3px solid var(--accent-yellow); border-left: 3px solid var(--accent-yellow); }
+    .corner-tr { top: -1px; right: -1px; border-top: 3px solid var(--accent-yellow); border-right: 3px solid var(--accent-yellow); }
+    .corner-bl { bottom: -1px; left: -1px; border-bottom: 3px solid var(--accent-yellow); border-left: 3px solid var(--accent-yellow); }
+    .corner-br { bottom: -1px; right: -1px; border-bottom: 3px solid var(--accent-yellow); border-right: 3px solid var(--accent-yellow); }
+
+    /* CONTENT LAYOUT (SWISS EDITORIAL GRID) */
+    .content-grid {
+      position: absolute;
+      inset: 6.5%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    /* HEADER META BAR */
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 12px;
+      font-family: var(--font-mono);
+      font-size: clamp(10px, 1vw, 13px);
+      letter-spacing: 0.12em;
+    }
+
+    .meta-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-yellow);
+      font-weight: 700;
+    }
+
+    .dot-pulse {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-yellow);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-yellow);
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* CENTER TYPOGRAPHY SECTION */
+    .hero-typography {
+      margin-top: 10px;
+    }
+
+    .hero-sub {
+      font-size: clamp(11px, 1.1vw, 15px);
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-sub::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 2px;
+      background-color: var(--accent-yellow);
+    }
+
+    .hero-title {
+      font-size: clamp(38px, 4.8vw, 76px);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* BOTTOM COMPARISON METRICS SECTION (4 COLUMNS / SWISS GRID) */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      border-top: 1px solid var(--panel-border);
+      padding-top: 16px;
+    }
+
+    .grid-col {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+
+    .grid-col:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .col-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      padding-bottom: 4px;
+    }
+
+    .col-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .col-list {
+      list-style: none;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+
+    .col-list li {
+      position: relative;
+      padding-left: 12px;
+      margin-bottom: 3px;
+    }
+
+    .col-list li::before {
+      content: '▪';
+      position: absolute;
+      left: 0;
+      color: var(--accent-yellow);
+      font-size: 8px;
+    }
+
+    /* BADGE TAGS */
+    .badge-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .badge-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+
+    .badge-us {
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      color: #93c5fd;
+    }
+
+    .badge-ch {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    /* ANIMATION ENTRANCE CLASSES */
+    .anim-fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .anim-scale-x {
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .in-view .anim-fade-up {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .in-view .anim-scale-x {
+      transform: scaleX(1);
+    }
+
+    /* CONTROLS PANEL */
+    .controls-panel {
+      width: 100%;
+      max-width: 1280px;
+      margin-top: 20px;
+      background: #121318;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .control-group input, .control-group select {
+      background: #090a0c;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .control-group input:focus, .control-group select:focus {
+      border-color: var(--accent-yellow);
+    }
+
+    .btn-action {
+      background: var(--accent-yellow);
+      color: #000000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background-color 0.2s, transform 0.1s;
+      align-self: flex-start;
+      margin-top: 24px;
+    }
+
+    .btn-action:hover {
+      background: #fff066;
+      transform: translateY(-1px);
+    }
+
+    .btn-action:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP STATUS NAV -->
+  <div class="top-nav">
+    <div>SWISS EDITORIAL GRAPHIC PROTOTYPE // <span class="badge">INTERACTIVE DEMO</span></div>
+    <div>RESOL: 1920x1080 (16:9) | GRID: SWISS MONOCHROME</div>
+  </div>
+
+  <!-- 16:9 VIDEO CANVAS CONTAINER -->
+  <div class="viewport-outer">
+    <div class="stage in-view" id="videoStage">
+      
+      <!-- Noise Texture -->
+      <div class="noise-layer"></div>
+
+      <!-- Swiss Grid Background -->
+      <div class="grid-layer"></div>
+      
+      <!-- Diagonal Accent Lines -->
+      <div class="diagonal-line-1" id="diagLine1"></div>
+      <div class="diagonal-line-2"></div>
+
+      <!-- Giant Watermark Background (US VS CH) -->
+      <div class="watermark-container">
+        <div class="watermark-text anim-active" id="wmText">US  VS  CH</div>
+      </div>
+
+      <!-- Frame & Bracket Margins -->
+      <div class="frame-border">
+        <div class="corner-bracket corner-tl"></div>
+        <div class="corner-bracket corner-tr"></div>
+        <div class="corner-bracket corner-bl"></div>
+        <div class="corner-bracket corner-br"></div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-grid">
+        
+        <!-- Header Bar -->
+        <div class="meta-bar anim-scale-x" style="transition-delay: 0.1s;">
+          <div class="meta-tag">
+            <div class="dot-pulse"></div>
+            <span id="catText">MODEL BENCHMARK VOL. 01</span>
+          </div>
+          <div style="color: rgba(255,255,255,0.4);">
+            SYS.ID // 2026.07.27 // CONFIDENTIAL
+          </div>
+        </div>
+
+        <!-- Main Title & Subtitle -->
+        <div class="hero-typography anim-fade-up" style="transition-delay: 0.25s;">
+          <div class="hero-sub" id="subTitleText">2026 AI MODEL EVALUATION REPORT</div>
+          <h1 class="hero-title" id="mainTitleText">MODEL<br>BENCHMARK 2026</h1>
+        </div>
+
+        <!-- Bottom 4 Columns (Swiss Grid Metrics) -->
+        <div class="bottom-grid anim-fade-up" style="transition-delay: 0.4s;">
+          
+          <!-- Col 1: USA Camp -->
+          <div class="grid-col">
+            <div>
+              <div class="col-header">
+                <span>01 // USA CAMP</span>
+                <span style="color: var(--accent-blue);">WEST</span>
+              </div>
+              <div class="col-title" id="usCampTitle">FLAGSHIP MODELS</div>
+              <div class="badge-group">
+                <span class="badge-pill badge-us">GPT-4o</span>
+                <span class="badge-pill badge-us">Claude 3.5</span>
+              </div>
+            </div>
+            <ul class="col-list" style="margin-top: 10px;">
+              <li>Reasoning & Logic</li>
+              <li>Agentic Workflow</li>
+            </ul>
+          </div>
+
+          <!-- Col 2: China Camp -->
+          <div class="grid-col">
+            <div>
+              <div class="col-header">
+                <span>02 // CHINA CAMP</span>
+                <span style="color: var(--accent-red);">EAST</span>
+              </div>
+              <div class="col-title" id="chCampTitle">OPEN & PROPRIETARY</div>
+              <div class="badge-group">
+                <span class="badge-pill badge-ch">DeepSeek-V3</span>
+                <span class="badge-pill badge-ch">Qwen 2.5</span>
+              </div>
+            </div>
+            <ul class="col-list" style="margin-top: 10px;">
+              <li>MoE Efficiency</li>
+              <li>Math & Code Speed</li>
+            </ul>
+          </div>
+
+          <!-- Col 3: Benchmark Dimensions -->
+          <div class="grid-col">
+            <div>
+              <div class="col-header">
+                <span>03 // METRICS</span>
+                <span>DATA</span>
+              </div>
+              <div class="col-title">EVAL DYNAMICS</div>
+              <ul class="col-list">
+                <li>HumanEval & MMLU</li>
+                <li>TPS & Latency</li>
+                <li>API Cost / 1M Tokens</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Col 4: Verdict & Future -->
+          <div class="grid-col">
+            <div>
+              <div class="col-header">
+                <span>04 // VERDICT</span>
+                <span style="color: var(--accent-yellow);">2026</span>
+              </div>
+              <div class="col-title">SUMMARY</div>
+              <ul class="col-list">
+                <li>Comprehensive Analysis</li>
+                <li>Final Performance Index</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- INTERACTIVE CONTROLS FOR RAPID ITERATION -->
+  <div class="controls-panel">
+    
+    <div class="control-group">
+      <label>背景巨幅水印文字</label>
+      <select id="watermarkSelect" onchange="updateWatermark(this.value)">
+        <option value="US  VS  CH">US  VS  CH</option>
+        <option value="MODEL BATTLE">MODEL BATTLE</option>
+        <option value="AI ARENA 2026">AI ARENA 2026</option>
+        <option value="LLM BENCHMARK">LLM BENCHMARK</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>主标题文本</label>
+      <input type="text" id="titleInput" value="MODEL BENCHMARK 2026" oninput="updateTitle(this.value)">
+    </div>
+
+    <div class="control-group">
+      <label>副标题文本</label>
+      <input type="text" id="subTitleInput" value="2026 AI MODEL EVALUATION REPORT" oninput="updateSubtitle(this.value)">
+    </div>
+
+    <div class="control-group">
+      <label>主题调色盘</label>
+      <select id="themeSelect" onchange="updateTheme(this.value)">
+        <option value="default">默认极客黑 (Yellow Accent)</option>
+        <option value="monochrome">瑞士经典单色 (Swiss Mono)</option>
+        <option value="neon-cyber">电光青蓝 (Cyber Cyan)</option>
+      </select>
+    </div>
+
+    <button class="btn-action" onclick="replayAnimation()">▶ 重新播放入场动效</button>
+
+  </div>
+
+  <script>
+    const stage = document.getElementById('videoStage');
+    const wmText = document.getElementById('wmText');
+    const mainTitleText = document.getElementById('mainTitleText');
+    const subTitleText = document.getElementById('subTitleText');
+
+    function replayAnimation() {
+      stage.classList.remove('in-view');
+      wmText.classList.remove('anim-active');
+      
+      setTimeout(() => {
+        stage.classList.add('in-view');
+        wmText.classList.add('anim-active');
+      }, 50);
+    }
+
+    function updateWatermark(val) {
+      wmText.textContent = val;
+    }
+
+    function updateTitle(val) {
+      mainTitleText.innerHTML = val.replace('\n', '<br>');
+    }
+
+    function updateSubtitle(val) {
+      subTitleText.textContent = val;
+    }
+
+    function updateTheme(theme) {
+      const root = document.documentElement;
+      if (theme === 'monochrome') {
+        root.style.setProperty('--accent-yellow', '#ffffff');
+        root.style.setProperty('--bg-color', '#101010');
+      } else if (theme === 'neon-cyber') {
+        root.style.setProperty('--accent-yellow', '#00f0ff');
+        root.style.setProperty('--bg-color', '#070c14');
+      } else {
+        root.style.setProperty('--accent-yellow', '#ffe600');
+        root.style.setProperty('--bg-color', '#0d0e11');
+      }
+    }
+  </script>
+
+</body>
+</html>
