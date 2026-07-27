@@ -107,7 +107,7 @@
     }
 
     .stage.run .rail {
-      animation: railIn .42s var(--ease) 5.45s forwards;
+      animation: railCycle 6.4s var(--ease) forwards;
     }
 
     .rail-number {
@@ -458,7 +458,7 @@
     .controls span { opacity: .6; }
 
     .stage.cover .paper-mark svg { opacity: 1; transform: scale(1); }
-    .stage.cover .rail { transform: translateX(-102%); }
+    .stage.cover .rail { transform: none; }
     .stage.cover .reveal { opacity: 1; transform: none; }
     .stage.cover .blue-rule { transform: scaleX(1); }
 
@@ -480,7 +480,7 @@
 
     .stage.zoom .scene { transform: scale(1.52); }
     .stage.zoom .paper-mark svg { opacity: 0; transform: scale(1); }
-    .stage.zoom .rail { transform: none; }
+    .stage.zoom .rail { transform: translateX(-102%); }
     .stage.zoom .reveal { opacity: 1; transform: none; }
     .stage.zoom .blue-rule { transform: scaleX(1); }
     .stage.zoom .task-entry,
@@ -494,6 +494,23 @@
     .stage.zoom .model-kimi { transform: translate(-13.5cqw, -19cqw); }
     .stage.zoom .model-qwen { transform: translate(-22.7cqw, -14.5cqw); }
     .stage.zoom .model-kieran { opacity: 0; transform: translateY(-2cqw); }
+
+    .stage.program .scene { transform: scale(1.52); }
+    .stage.program .paper-mark svg { opacity: 0; transform: scale(1); }
+    .stage.program .rail { transform: none; }
+    .stage.program .reveal { opacity: 1; transform: none; }
+    .stage.program .blue-rule { transform: scaleX(1); }
+    .stage.program .task-entry,
+    .stage.program .camp-label { opacity: 1; transform: none; }
+    .stage.program .score-legend { opacity: 0; transform: translateY(-8cqw); }
+    .stage.program .bottom-rule { opacity: 0; }
+    .stage.program .model-gpt { transform: translate(-8.3cqw, -28cqw); }
+    .stage.program .model-claude { transform: translate(-17.5cqw, -23.5cqw); }
+    .stage.program .model-fable { transform: translate(5cqw, -28cqw); }
+    .stage.program .model-deepseek { transform: translate(-4.2cqw, -23.5cqw); }
+    .stage.program .model-kimi { transform: translate(-13.5cqw, -19cqw); }
+    .stage.program .model-qwen { transform: translate(-22.7cqw, -14.5cqw); }
+    .stage.program .model-kieran { opacity: 0; transform: translateY(-2cqw); }
 
     @keyframes markSequence {
       0%   { opacity: 0; transform: scale(1.055); }
@@ -514,7 +531,12 @@
       84%, 100% { transform: scale(1.52); }
     }
 
-    @keyframes railIn { to { transform: translateX(0); } }
+    @keyframes railCycle {
+      0% { transform: translateX(-102%); }
+      8%, 28% { transform: translateX(0); }
+      36%, 84% { transform: translateX(-102%); }
+      92%, 100% { transform: translateX(0); }
+    }
     @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
     @keyframes ruleIn { to { transform: scaleX(1); } }
     @keyframes taskIn { to { opacity: 1; transform: translateY(0); } }
@@ -644,7 +666,8 @@
       <button type="button" data-mode="cover">停在封面关键帧</button>
       <button type="button" data-mode="group">停在两列分组帧</button>
       <button type="button" data-mode="zoom">停在中心推进帧</button>
-      <span>空格：重播　C：封面　G：分组　Z：中心推进</span>
+      <button type="button" data-mode="program">停在节目内容帧</button>
+      <span>空格：重播　C：封面　G：分组　Z：中心　P：节目</span>
     </div>
   </div>
 
@@ -669,6 +692,7 @@
       if (event.key.toLowerCase() === "c") setMode("cover");
       if (event.key.toLowerCase() === "g") setMode("group");
       if (event.key.toLowerCase() === "z") setMode("zoom");
+      if (event.key.toLowerCase() === "p") setMode("program");
     });
   </script>
 </body>
